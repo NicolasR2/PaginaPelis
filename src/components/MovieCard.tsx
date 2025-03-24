@@ -1,39 +1,50 @@
-import { Card, CardContent, Typography } from "@mui/material";
+import React, { useState } from "react";
+import { Card, CardContent, Typography, Button } from "@mui/material";
 
 interface Movie {
   id: number;
   title: string;
   description: string;
-  release_year: number;
   rental_rate: number;
-  length: number;
-  rating: string;
 }
 
 interface MovieCardProps {
   movie: Movie;
+  onAddToCart: (movie: Movie) => void;
+  isInCart: boolean; // Nuevo prop para saber si está en el carrito
 }
 
-const MovieCard: React.FC<MovieCardProps> = ({ movie }) => {
+const MovieCard: React.FC<MovieCardProps> = ({
+  movie,
+  onAddToCart,
+  isInCart,
+}) => {
+  const [added, setAdded] = useState(isInCart);
+
+  const handleAddToCart = () => {
+    if (!added) {
+      onAddToCart(movie);
+      setAdded(true);
+    }
+  };
+
   return (
-    <Card sx={{ maxWidth: 300, boxShadow: 3 }}>
+    <Card sx={{ marginBottom: 2, padding: 2, boxShadow: 3 }}>
       <CardContent>
-        <Typography variant="h6" component="div">
-          {movie.title}
+        <Typography variant="h6">{movie.title}</Typography>
+        <Typography variant="body2">{movie.description}</Typography>
+        <Typography variant="body1">
+          Precio: ${movie.rental_rate.toFixed(2)}
         </Typography>
-        <Typography color="text.secondary">{movie.description}</Typography>
-        <Typography variant="body2" color="text.secondary">
-          Año: {movie.release_year}
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          Precio: ${movie.rental_rate}
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          Duración: {movie.length} min
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          Rating: {movie.rating}
-        </Typography>
+
+        <Button
+          variant="contained"
+          color={added ? "success" : "primary"} // Cambia de color si fue agregado
+          onClick={handleAddToCart}
+          sx={{ marginTop: 1 }}
+        >
+          {added ? "Agregado al Carrito" : "Añadir al Carrito"}
+        </Button>
       </CardContent>
     </Card>
   );
