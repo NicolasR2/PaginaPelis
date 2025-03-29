@@ -22,9 +22,10 @@ const MovieList: React.FC<MovieListProps> = ({
   searchTerm,
 }) => {
   // Filtra películas según la búsqueda (ignorando mayúsculas/minúsculas)
-  const filteredMovies = movies.filter((movie) =>
-    movie.title.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredMovies = (movies ?? []).filter((movie) =>
+  movie?.title?.toLowerCase().includes(searchTerm?.toLowerCase() ?? "")
+);
+
 
   return (
     <div>

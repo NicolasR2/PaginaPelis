@@ -1,34 +1,41 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import MovieList from "./components/MovieList";
 import Cart from "./components/Cart";
 import SearchBar from "./components/SearchBar";
 import { Button, Container, Box } from "@mui/material";
 
-const moviesData = [
-  {
-    id: 1,
-    title: "Titanic",
-    description: "A love story on a doomed ship",
-    rental_rate: 4.99,
-  },
-  {
-    id: 2,
-    title: "Inception",
-    description: "A dream within a dream",
-    rental_rate: 3.99,
-  },
-  {
-    id: 3,
-    title: "Interstellar",
-    description: "Exploring the universe beyond time",
-    rental_rate: 5.99,
-  },
-];
+const API_URL = "http://ec2-18-214-88-89.compute-1.amazonaws.com:8000/movies";
+const SEARCH_URL = "http://ec2-18-214-88-89.compute-1.amazonaws.com:8000/movies/search/";
 
 function App() {
+  const [movies, setMovies] = useState<Movie[]>([]);
   const [cart, setCart] = useState<Movie[]>([]);
   const [showCart, setShowCart] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
+
+  // 🔹 Obtener 10 películas aleatorias o buscar por query
+  const fetchMovies = async (query: string) => {
+    try {
+      const url = query ? `${SEARCH_URL}?query=${query}` : API_URL;
+      const response = await fetch(url);
+      const data = await response.json();
+
+      let movieList = data.movies || [];
+
+      // 🔀 Si la búsqueda está vacía, mezclar películas aleatoriamente
+      if (!query) {
+        movieList = movieList.sort(() => Math.random() - 0.5).slice(0, 10);
+      }
+
+      setMovies(movieList);
+    } catch (error) {
+      console.error("Error al obtener películas:", error);
+    }
+  };
+
+  // 🔄 Cargar 10 películas aleatorias al inicio
+  useEffect(() => {
+    fetchMovies("");
+  }, []);
 
   const addToCart = (movie: Movie) => {
     if (!cart.some((m) => m.id === movie.id)) {
@@ -46,7 +53,6 @@ function App() {
 
   return (
     <Container>
-      {/* 🔹 Contenedor fijo para barra de búsqueda y botón de carrito */}
       <Box
         sx={{
           position: "fixed",
@@ -56,42 +62,32 @@ function App() {
           backgroundColor: "white",
           padding: "10px 20px",
           display: "flex",
-          alignItems: "center", // ✅ Asegura que los elementos estén alineados verticalmente
+          alignItems: "center",
           justifyContent: "space-between",
           boxShadow: "0px 2px 5px rgba(0,0,0,0.2)",
           zIndex: 1000,
-          height: "60px", // ✅ Se le da una altura fija para mejor alineación
+          height: "60px",
         }}
       >
         {/* 🔎 Barra de búsqueda */}
         <Box sx={{ flex: 1, marginRight: 2 }}>
-          <SearchBar searchTerm={searchTerm} onSearchChange={setSearchTerm} />
+          <SearchBar onSearch={fetchMovies} />
         </Box>
 
-        {/* 🛒 Botón "Ver Carrito" alineado correctamente */}
+        {/* 🛒 Botón "Ver Carrito" */}
         <Button
           variant="contained"
           color="secondary"
           onClick={toggleCart}
-          sx={{
-            height: "40px", // ✅ Le damos una altura similar a la barra de búsqueda
-            display: "flex",
-            alignItems: "center",
-          }}
+          sx={{ height: "40px", display: "flex", alignItems: "center" }}
         >
           {showCart ? "Volver a Películas" : `Ver Carrito (${cart.length})`}
         </Button>
       </Box>
 
-      {/* Añadimos un margen superior para que el contenido no quede tapado */}
       <Box sx={{ marginTop: "80px" }}>
         {!showCart ? (
-          <MovieList
-            movies={moviesData}
-            onAddToCart={addToCart}
-            cart={cart}
-            searchTerm={searchTerm}
-          />
+          <MovieList movies={movies} onAddToCart={addToCart} cart={cart} searchTerm="" />
         ) : (
           <Cart cart={cart} onRemoveFromCart={removeFromCart} />
         )}

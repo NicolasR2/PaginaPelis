@@ -1,23 +1,26 @@
-import React from "react";
+import React, { useState } from "react";
 import { TextField } from "@mui/material";
 
 interface SearchBarProps {
-  searchTerm: string;
-  onSearchChange: (term: string) => void;
+  onSearch: (query: string) => void;
 }
 
-const SearchBar: React.FC<SearchBarProps> = ({
-  searchTerm,
-  onSearchChange,
-}) => {
+const SearchBar: React.FC<SearchBarProps> = ({ onSearch }) => {
+  const [input, setInput] = useState("");
+
+  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const query = event.target.value;
+    setInput(query);
+    onSearch(query); // 🔍 Llama a la función para buscar en la API
+  };
+
   return (
     <TextField
-      label="Buscar película..."
+      label="Buscar películas..."
       variant="outlined"
       fullWidth
-      value={searchTerm}
-      onChange={(e) => onSearchChange(e.target.value)}
-      sx={{ marginBottom: 2 }}
+      value={input}
+      onChange={handleChange}
     />
   );
 };
