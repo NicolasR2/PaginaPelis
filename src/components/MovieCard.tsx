@@ -10,20 +10,20 @@ interface Movie {
 
 interface MovieCardProps {
   movie: Movie;
-  onAddToCart: (movie: Movie) => void;
-  isInCart: boolean; // Nuevo prop para saber si está en el carrito
+  onToggleCart: (movie: Movie) => void;
+  isInCart: boolean;
 }
 
 const MovieCard: React.FC<MovieCardProps> = ({
   movie,
-  onAddToCart,
+  onToggleCart,
   isInCart,
 }) => {
   const [added, setAdded] = useState(isInCart);
 
   const handleAddToCart = () => {
     if (!added) {
-      onAddToCart(movie);
+      onToggleCart(movie);
       setAdded(true);
     }
   };
@@ -39,11 +39,11 @@ const MovieCard: React.FC<MovieCardProps> = ({
 
         <Button
           variant="contained"
-          color={added ? "success" : "primary"} // Cambia de color si fue agregado
-          onClick={handleAddToCart}
+          color={isInCart ?  "error":"success" } // Cambia de color si fue agregado
+          onClick={() => onToggleCart(movie)}
           sx={{ marginTop: 1 }}
         >
-          {added ? "Agregado al Carrito" : "Añadir al Carrito"}
+          {isInCart ? "Quitar del carrito" : "Agregar al carrito"}
         </Button>
       </CardContent>
     </Card>

@@ -4,37 +4,24 @@ import MovieCard from "./MovieCard";
 interface Movie {
   id: number;
   title: string;
-  description: string;
   rental_rate: number;
 }
 
 interface MovieListProps {
   movies: Movie[];
-  onAddToCart: (movie: Movie) => void;
+  onToggleCart: (movie: Movie) => void;
   cart: Movie[];
-  searchTerm: string;
 }
 
-const MovieList: React.FC<MovieListProps> = ({
-  movies,
-  onAddToCart,
-  cart,
-  searchTerm,
-}) => {
-  // Filtra películas según la búsqueda (ignorando mayúsculas/minúsculas)
-  const filteredMovies = (movies ?? []).filter((movie) =>
-  movie?.title?.toLowerCase().includes(searchTerm?.toLowerCase() ?? "")
-);
-
-
+const MovieList: React.FC<MovieListProps> = ({ movies, onToggleCart, cart }) => {
   return (
     <div>
-      {filteredMovies.length > 0 ? (
-        filteredMovies.map((movie) => (
+      {movies.length > 0 ? (
+        movies.map((movie) => (
           <MovieCard
             key={movie.id}
             movie={movie}
-            onAddToCart={onAddToCart}
+            onToggleCart={onToggleCart}
             isInCart={cart.some((m) => m.id === movie.id)}
           />
         ))

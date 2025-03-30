@@ -2,10 +2,10 @@ import { useState, useEffect } from "react";
 import MovieList from "./components/MovieList";
 import Cart from "./components/Cart";
 import SearchBar from "./components/SearchBar";
-import { Button, Container, Box } from "@mui/material";
+import { Button, Container, Box, Typography } from "@mui/material";
 
-const API_URL = "http://ec2-18-214-88-89.compute-1.amazonaws.com:8000/movies";
-const SEARCH_URL = "http://ec2-18-214-88-89.compute-1.amazonaws.com:8000/movies/search/";
+const API_URL = "http://44.222.142.138:8000/movies";
+const SEARCH_URL = "http://44.222.142.138:8000/movies/search/";
 
 function App() {
   const [movies, setMovies] = useState<Movie[]>([]);
@@ -21,7 +21,7 @@ function App() {
 
       let movieList = data.movies || [];
 
-      // 🔀 Si la búsqueda está vacía, mezclar películas aleatoriamente
+      // 🔀 Si la búsqueda está vacía, mostrar 10 películas aleatorias
       if (!query) {
         movieList = movieList.sort(() => Math.random() - 0.5).slice(0, 10);
       }
@@ -36,12 +36,19 @@ function App() {
   useEffect(() => {
     fetchMovies("");
   }, []);
+  
+  const onClearCart = () => {
+    setCart([]); // Vacía el carrito después del pago
+  };
 
-  const addToCart = (movie: Movie) => {
-    if (!cart.some((m) => m.id === movie.id)) {
-      setCart((prevCart) => [...prevCart, movie]);
+  const handleToggleCart = (movie: Movie) => {
+    if (cart.some((m) => m.id === movie.id)) {
+      setCart(cart.filter((m) => m.id !== movie.id)); // Elimina si ya está en el carrito
+    } else {
+      setCart([...cart, movie]); // Agrega si no está en el carrito
     }
   };
+
 
   const removeFromCart = (movieId: number) => {
     setCart((prevCart) => prevCart.filter((movie) => movie.id !== movieId));
@@ -53,43 +60,70 @@ function App() {
 
   return (
     <Container>
-      <Box
-        sx={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          width: "100%",
-          backgroundColor: "white",
-          padding: "10px 20px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          boxShadow: "0px 2px 5px rgba(0,0,0,0.2)",
-          zIndex: 1000,
-          height: "60px",
-        }}
-      >
-        {/* 🔎 Barra de búsqueda */}
-        <Box sx={{ flex: 1, marginRight: 2 }}>
-          <SearchBar onSearch={fetchMovies} />
-        </Box>
-
-        {/* 🛒 Botón "Ver Carrito" */}
-        <Button
-          variant="contained"
-          color="secondary"
-          onClick={toggleCart}
-          sx={{ height: "40px", display: "flex", alignItems: "center" }}
+      {/* 🔹 Barra de búsqueda (Oculta en el carrito) */}
+      {!showCart && (
+        <Box
+          sx={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100%",
+            backgroundColor: "white",
+            padding: "10px 20px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            boxShadow: "0px 2px 5px rgba(0,0,0,0.2)",
+            zIndex: 1000,
+            height: "60px",
+          }}
         >
-          {showCart ? "Volver a Películas" : `Ver Carrito (${cart.length})`}
-        </Button>
-      </Box>
+          <Box sx={{ flex: 1, marginRight: 2 }}>
+            <SearchBar onSearch={fetchMovies} />
+          </Box>
 
-      <Box sx={{ marginTop: "80px" }}>
+          {/* 🛒 Botón "Ver Carrito" con margen derecho más grande */}
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={toggleCart}
+            sx={{
+              height: "40px",
+              display: "flex",
+              alignItems: "center",
+              marginRight: "30px", // ✅ Aumenta el margen derecho
+            }}
+          >
+            {showCart ? "Volver a Películas" : `Ver Carrito (${cart.length})`}
+          </Button>
+        </Box>
+      )}
+
+      <Box sx={{ marginTop: showCart ? "20px" : "80px" }}>
         {!showCart ? (
-          <MovieList movies={movies} onAddToCart={addToCart} cart={cart} searchTerm="" />
+          <MovieList movies={movies} onToggleCart={handleToggleCart} cart={cart} />
         ) : (
-          <Cart cart={cart} onRemoveFromCart={removeFromCart} />
+        <div>
+        <Container sx={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 2 }}>
+  <Button
+    variant="contained"
+    color="primary"
+    onClick={toggleCart}
+    sx={{
+      height: "40px",
+      display: "flex",
+      alignItems: "center",
+      marginBottom: 2, // Espacio entre el botón y el carrito
+    }}
+  >
+    {showCart ? "Volver a Películas" : `Ver Carrito (${cart.length})`}
+  </Button>
+
+  <Box sx={{ width: "100%", maxWidth: 400 }}>
+    <Cart cart={cart} onRemoveFromCart={removeFromCart} onClearCart={onClearCart} />
+  </Box>
+</Container>
+          </div>
         )}
       </Box>
     </Container>
