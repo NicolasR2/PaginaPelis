@@ -4,9 +4,9 @@ import MovieCard from "./MovieCard";
 interface Movie {
   id: number;
   title: string;
+  description: string;
   rental_rate: number;
 }
-
 interface MovieListProps {
   movies: Movie[];
   onToggleCart: (movie: Movie) => void;

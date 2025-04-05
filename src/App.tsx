@@ -2,15 +2,24 @@ import { useState, useEffect } from "react";
 import MovieList from "./components/MovieList";
 import Cart from "./components/Cart";
 import SearchBar from "./components/SearchBar";
-import { Button, Container, Box, Typography } from "@mui/material";
+import { Button, Container, Box } from "@mui/material";
 
-const API_URL = "http://44.222.142.138:8000/movies";
-const SEARCH_URL = "http://44.222.142.138:8000/movies/search/";
+const API_URL = "http://18.212.91.156:8000/movies";
+const SEARCH_URL = "http://18.212.91.156:8000/movies/search/";
+
 
 function App() {
+  interface Movie {
+  id: number;
+  title: string;
+  description: string;
+  rental_rate: number;
+}
   const [movies, setMovies] = useState<Movie[]>([]);
   const [cart, setCart] = useState<Movie[]>([]);
   const [showCart, setShowCart] = useState(false);
+  
+  
 
   // 🔹 Obtener 10 películas aleatorias o buscar por query
   const fetchMovies = async (query: string) => {
@@ -31,6 +40,7 @@ function App() {
       console.error("Error al obtener películas:", error);
     }
   };
+  
 
   // 🔄 Cargar 10 películas aleatorias al inicio
   useEffect(() => {

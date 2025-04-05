@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+
 import { Card, CardContent, Typography, Button } from "@mui/material";
 
 interface Movie {
@@ -19,14 +19,9 @@ const MovieCard: React.FC<MovieCardProps> = ({
   onToggleCart,
   isInCart,
 }) => {
-  const [added, setAdded] = useState(isInCart);
+  
 
-  const handleAddToCart = () => {
-    if (!added) {
-      onToggleCart(movie);
-      setAdded(true);
-    }
-  };
+  
 
   return (
     <Card sx={{ marginBottom: 2, padding: 2, boxShadow: 3 }}>
