@@ -3,35 +3,26 @@ FROM node:18 AS builder
 
 WORKDIR /app
 
-# Copy package files first for better caching
+# Instala las dependencias necesarias para compilación
+RUN apt-get update && apt-get install -y python3 make g++
+
+# Copia los archivos de paquetes primero
 COPY package.json package-lock.json ./
 
-# Install all dependencies including devDependencies
-RUN npm install -g typescript && \
-    npm install && \
-    npm install @mui/icons-material @mui/material @emotion/react @emotion/styled @vitejs/plugin-react
-
-# Clean cache and remove potential conflicts
-RUN rm -rf node_modules/.vite && \
-    rm -rf node_modules/.cache && \
+# Limpieza y reinstalación limpia
+RUN rm -rf node_modules package-lock.json && \
+    npm install --force && \
     npm cache clean --force
 
-# Copy all files
+# Copia el resto de los archivos
 COPY . .
 
-# Build the app
+# Construye la aplicación
 RUN npm run build
 
 # Stage 2: Production
 FROM nginx:alpine
-
-# Copy nginx config
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-
-# Copy built app from builder
 COPY --from=builder /app/dist /usr/share/nginx/html
-
-# Expose port 80
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 EXPOSE 80
-
 CMD ["nginx", "-g", "daemon off;"]
