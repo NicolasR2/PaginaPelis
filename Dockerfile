@@ -12,6 +12,7 @@ COPY package.json package-lock.json ./
 
 
 RUN npm install typescript -g && npm install --save-dev typescript
+RUN npm update @mui/material @emotion/react @emotion/styled @vitejs/plugin-react
 RUN npm install
 
 
