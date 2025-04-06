@@ -200,21 +200,7 @@ function App() {
                 minWidth: 0, // Permite que el contenido se reduzca
               }}
             >
-              <SearchBar
-                onSearch={fetchMovies}
-                sx={{
-                  width: "100%",
-                  height: "40px",
-                  "& .MuiInputBase-root": {
-                    // Estilos para el input interno
-                    height: "100%",
-                  },
-                  "& .MuiOutlinedInput-input": {
-                    // Ajuste del input
-                    padding: "10px 14px",
-                  },
-                }}
-              />
+              <SearchBar onSearch={fetchMovies} />
             </Box>
           </Box>
 
