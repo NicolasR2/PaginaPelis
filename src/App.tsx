@@ -13,7 +13,6 @@ import axios from "axios";
 const API_BASE_URL = "http://18.212.91.156:8000";
 const MOVIES_URL = `${API_BASE_URL}/movies`;
 const SEARCH_URL = `${API_BASE_URL}/movies/search/`;
-const RENTALS_URL = `${API_BASE_URL}/rentals`;
 const CUSTOMER_URL = `${API_BASE_URL}/customer`;
 
 function App() {
@@ -23,38 +22,6 @@ function App() {
     description: string;
     rental_rate: number;
   }
-  const MOCK_MOVIES: Movie[] = [
-    {
-      id: 1,
-      title: "El Padrino",
-      description: "Drama sobre la familia mafiosa Corleone",
-      rental_rate: 2.99,
-    },
-    {
-      id: 2,
-      title: "Pulp Fiction",
-      description: "Historias entrelazadas de crimen en Los Ángeles",
-      rental_rate: 3.49,
-    },
-    {
-      id: 3,
-      title: "El Señor de los Anillos",
-      description: "Aventuras épicas en la Tierra Media",
-      rental_rate: 2.79,
-    },
-    {
-      id: 4,
-      title: "Titanic",
-      description: "Historia de amor en el trágico viaje inaugural",
-      rental_rate: 1.99,
-    },
-    {
-      id: 5,
-      title: "Matrix",
-      description: "Un hacker descubre la verdad sobre la realidad",
-      rental_rate: 3.29,
-    },
-  ];
 
   const [movies, setMovies] = useState<Movie[]>([]);
   const [cart, setCart] = useState<Movie[]>([]);
