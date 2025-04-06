@@ -1,4 +1,5 @@
 import React from "react";
+import { Box, Typography } from "@mui/material";
 import MovieCard from "./MovieCard";
 
 interface Movie {
@@ -7,15 +8,20 @@ interface Movie {
   description: string;
   rental_rate: number;
 }
+
 interface MovieListProps {
   movies: Movie[];
   onToggleCart: (movie: Movie) => void;
   cart: Movie[];
 }
 
-const MovieList: React.FC<MovieListProps> = ({ movies, onToggleCart, cart }) => {
+const MovieList: React.FC<MovieListProps> = ({
+  movies,
+  onToggleCart,
+  cart,
+}) => {
   return (
-    <div>
+    <Box sx={{ width: "100%" }}>
       {movies.length > 0 ? (
         movies.map((movie) => (
           <MovieCard
@@ -26,9 +32,26 @@ const MovieList: React.FC<MovieListProps> = ({ movies, onToggleCart, cart }) => 
           />
         ))
       ) : (
-        <p>No se encontraron películas.</p>
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            height: "50vh",
+            textAlign: "center",
+            padding: 3,
+          }}
+        >
+          <Typography variant="h5" color="textSecondary" sx={{ mb: 2 }}>
+            🎬 No hemos encontrado películas
+          </Typography>
+          <Typography variant="body1" color="text.secondary">
+            Prueba con otra búsqueda o revisa nuestro catálogo más tarde
+          </Typography>
+        </Box>
       )}
-    </div>
+    </Box>
   );
 };
 
