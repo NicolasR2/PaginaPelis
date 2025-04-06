@@ -1,11 +1,10 @@
 import { useState, useEffect } from "react";
-import MovieList from "./components/MovieList";
-import Cart from "./components/Cart";
-import SearchBar from "./components/SearchBar";
-import { Button, Container, Box } from "@mui/material";
-import AssignmentReturnIcon from "@mui/icons-material/AssignmentReturn";
-import ReturnsDialog from "./components/ReturnsDialog";
-import IconButton from "@mui/material/IconButton";
+import MovieList from "./components/MovieList"; // Asumiendo export default
+import Cart from "./components/Cart"; // Asumiendo export default
+import SearchBar from "./components/SearchBar"; // Asumiendo export default
+import { Button, Container, Box, IconButton } from "@mui/material";
+import { AssignmentReturn as AssignmentReturnIcon } from "@mui/icons-material";
+import ReturnsDialog from "./components/ReturnsDialog"; // Asumiendo export default
 import axios from "axios";
 
 // Añade este estado al componente App
