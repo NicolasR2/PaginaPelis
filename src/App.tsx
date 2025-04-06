@@ -6,6 +6,7 @@ import { Button, Container, Box } from "@mui/material";
 import AssignmentReturnIcon from "@mui/icons-material/AssignmentReturn";
 import ReturnsDialog from "./components/ReturnsDialog";
 import IconButton from "@mui/material/IconButton";
+import axios from "axios";
 
 // Añade este estado al componente App
 
@@ -108,10 +109,6 @@ function App() {
       }
 
       // Procesar el alquiler
-      const response = await axios.post(RENTALS_URL, {
-        customer_id: customerId,
-        film_ids: cart.map((movie) => movie.id),
-      });
 
       alert("Películas rentadas exitosamente.");
       setCart([]);
@@ -135,10 +132,6 @@ function App() {
       let movieList = data.movies || [];
 
       // Si no hay datos de la API, usar el mock (solo en desarrollo)
-      if (movieList.length === 0 && process.env.NODE_ENV === "development") {
-        console.warn("Usando datos mockeados - API no disponible");
-        movieList = [...MOCK_MOVIES];
-      }
 
       // 🔀 Si la búsqueda está vacía, mostrar 10 películas aleatorias
       if (!query) {
@@ -199,34 +192,65 @@ function App() {
             height: "60px",
           }}
         >
-          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+          {/* Contenedor izquierdo (icono + barra búsqueda) */}
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 2,
+              flex: 1, // Ocupa todo el espacio disponible
+              maxWidth: "calc(100% - 180px)", // Deja espacio para el botón del carrito
+            }}
+          >
             <IconButton
               onClick={() => setReturnsOpen(true)}
               color="primary"
               sx={{
                 backgroundColor: "primary.main",
                 color: "white",
-                "&:hover": {
-                  backgroundColor: "primary.dark",
-                },
+                "&:hover": { backgroundColor: "primary.dark" },
+                flexShrink: 0,
               }}
             >
               <AssignmentReturnIcon />
             </IconButton>
-            <Box sx={{ flex: 1, marginRight: 2 }}>
-              <SearchBar onSearch={fetchMovies} />
+
+            {/* Contenedor de la barra de búsqueda */}
+            <Box
+              sx={{
+                flex: 1,
+                height: "100%",
+                minWidth: 0, // Permite que el contenido se reduzca
+              }}
+            >
+              <SearchBar
+                onSearch={fetchMovies}
+                sx={{
+                  width: "100%",
+                  height: "40px",
+                  "& .MuiInputBase-root": {
+                    // Estilos para el input interno
+                    height: "100%",
+                  },
+                  "& .MuiOutlinedInput-input": {
+                    // Ajuste del input
+                    padding: "10px 14px",
+                  },
+                }}
+              />
             </Box>
           </Box>
 
+          {/* Botón del carrito */}
           <Button
             variant="contained"
             color="primary"
             onClick={toggleCart}
             sx={{
               height: "40px",
-              display: "flex",
-              alignItems: "center",
-              marginRight: "30px",
+              minWidth: "150px", // Ancho mínimo para el botón
+              flexShrink: 0,
+              marginRight: "20px",
             }}
           >
             {showCart ? "Volver a Películas" : `Ver Carrito (${cart.length})`}

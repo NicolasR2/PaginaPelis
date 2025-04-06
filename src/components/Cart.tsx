@@ -24,7 +24,7 @@ interface CartProps {
 
 const Cart: React.FC<CartProps> = ({ cart, onRemoveFromCart, onCheckout }) => {
   const [customerId, setCustomerId] = useState<string>("");
-  const [error, setError] = useState<string | null>(null);
+  const error = null;
   const [isVerifying, setIsVerifying] = useState(false);
 
   const handleCheckout = async () => {
