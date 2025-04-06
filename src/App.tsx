@@ -114,10 +114,25 @@ function App() {
       setCart([]);
     } catch (error) {
       console.error("Error al alquilar películas:", error);
-      if (error.response?.data?.detail) {
-        alert(error.response.data.detail);
+
+      if (error instanceof Error) {
+        // Error estándar
+        console.error("Mensaje de error:", error.message);
+
+        if (axios.isAxiosError(error)) {
+          // Error específico de Axios
+          if (error.response?.data?.detail) {
+            alert(error.response.data.detail);
+          } else {
+            alert(
+              error.message || "Error al procesar la renta. Intente nuevamente."
+            );
+          }
+        } else {
+          alert(error.message || "Error inesperado");
+        }
       } else {
-        alert("Error al procesar la renta. Intente nuevamente.");
+        alert("Error desconocido al procesar la renta");
       }
     }
   };
@@ -141,11 +156,6 @@ function App() {
       setMovies(movieList);
     } catch (error) {
       console.error("Error al obtener películas:", error);
-      // Solo usar mock en desarrollo
-      if (process.env.NODE_ENV === "development") {
-        console.warn("Fallo en la API - Usando datos mockeados");
-        setMovies(MOCK_MOVIES.sort(() => Math.random() - 0.5).slice(0, 10));
-      }
     }
   };
 
