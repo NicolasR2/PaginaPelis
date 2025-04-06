@@ -10,16 +10,12 @@ export default defineConfig({
       },
     }),
   ],
-  optimizeDeps: {
-    include: [
-      '@emotion/react', 
-      '@emotion/styled',
-      '@mui/material'
-    ],
-  },
   build: {
-    commonjsOptions: {
-      transformMixedEsModules: true,
-    },
+    sourcemap: true, // Para debugging en producción
+    chunkSizeWarningLimit: 1600,
+  },
+  server: {
+    host: true,
+    port: 3000,
   },
 })
