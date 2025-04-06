@@ -1,37 +1,37 @@
-# Usa la imagen oficial de Node.js
+# Stage 1: Builder
 FROM node:18 AS builder
 
-# Establece el directorio de trabajo
 WORKDIR /app
 
-# Copia los archivos necesarios
+# Copy package files first for better caching
 COPY package.json package-lock.json ./
 
+# Install all dependencies including devDependencies
+RUN npm install -g typescript && \
+    npm install && \
+    npm install @mui/icons-material @mui/material @emotion/react @emotion/styled @vitejs/plugin-react
 
-# Instala las dependencias
+# Clean cache and remove potential conflicts
+RUN rm -rf node_modules/.vite && \
+    rm -rf node_modules/.cache && \
+    npm cache clean --force
 
-
-RUN npm install typescript -g && npm install --save-dev typescript
-RUN npm update @mui/material @emotion/react @emotion/styled @vitejs/plugin-react
-RUN rm -rf node_modules/.vite
-RUN rm -rf node_modules
-RUN npm install
-
-
-# Copia el resto del código
+# Copy all files
 COPY . .
 
-# Construye la aplicación
+# Build the app
 RUN npm run build
 
-# Usa una imagen ligera de Nginx para servir el frontend
+# Stage 2: Production
 FROM nginx:alpine
 
-# Copia los archivos generados en la build de React
+# Copy nginx config
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+# Copy built app from builder
 COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Expone el puerto 80
+# Expose port 80
 EXPOSE 80
 
-# Comando por defecto
 CMD ["nginx", "-g", "daemon off;"]
