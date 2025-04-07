@@ -3,16 +3,15 @@ import MovieList from "./components/MovieList"; // Asumiendo export default
 import Cart from "./components/Cart"; // Asumiendo export default
 import SearchBar from "./components/SearchBar"; // Asumiendo export default
 import { Button, Container, Box, IconButton } from "@mui/material";
+import { Select, MenuItem, FormControl, InputLabel } from "@mui/material";
 import { AssignmentReturn as AssignmentReturnIcon } from "@mui/icons-material";
 import ReturnsDialog from "./components/ReturnsDialog"; // Asumiendo export default
 import axios from "axios";
+import { useAlert } from "./context/AlertContext";
 
 // Añade este estado al componente App
 
-const API_BASE_URL = "http://18.212.91.156:8000";
-const MOVIES_URL = `${API_BASE_URL}/movies`;
-const SEARCH_URL = `${API_BASE_URL}/movies/search/`;
-const CUSTOMER_URL = `${API_BASE_URL}/customer`;
+const API_BASE_URL = "http://18.206.172.229:8000";
 
 function App() {
   interface Movie {
@@ -26,109 +25,212 @@ function App() {
   const [cart, setCart] = useState<Movie[]>([]);
   const [showCart, setShowCart] = useState(false);
   const [returnsOpen, setReturnsOpen] = useState(false);
+  const [storeId, setStoreId] = useState(1);
+  const [searchQuery, setSearchQuery] = useState("");
+  const { showAlert } = useAlert(); // ⬅️ Esto es lo que permite usar showAlert
 
-  const verifyCustomer = async (customerId: number): Promise<boolean> => {
-    try {
-      const response = await axios.get(`${CUSTOMER_URL}/${customerId}`);
-      return response.data.exists;
-    } catch (error) {
-      console.error("Error verificando cliente:", error);
-      return false;
-    }
-  };
-  // Función completa de checkout
   const handleCheckout = async (customerId: number) => {
     try {
-      // Verificar primero si el cliente existe
-      const customerExists = await verifyCustomer(customerId);
-
-      if (!customerExists) {
-        alert("El ID de cliente no existe. Por favor verifique.");
+      if (!customerId) {
+        showAlert("❌ Por favor ingrese un ID de cliente válido", "error");
         return;
       }
 
       if (cart.length === 0) {
-        alert("El carrito está vacío.");
+        showAlert("🛒 El carrito está vacío", "warning");
         return;
       }
 
-      // Verificar disponibilidad de cada película
-      const availabilityChecks = await Promise.all(
-        cart.map((movie) =>
-          axios.get(`${API_BASE_URL}/films/${movie.id}/availability`)
-        )
-      );
-
-      const unavailableMovies = cart.filter(
-        (_, index) => !availabilityChecks[index].data.available
-      );
-
-      if (unavailableMovies.length > 0) {
-        alert(
-          `Las siguientes películas no están disponibles:\n${unavailableMovies
-            .map((m) => m.title)
-            .join(
-              "\n"
-            )}\n\nPor favor remuévalas del carrito e intente nuevamente.`
+      let customerExists = false;
+      try {
+        const customerResponse = await axios.get(
+          `${API_BASE_URL}/customers/${customerId}`
+        );
+        customerExists = customerResponse.data?.exists || false;
+      } catch (error) {
+        console.error("Error verificando cliente:", error);
+        showAlert(
+          "⚠️ Error al verificar el cliente. Intente nuevamente.",
+          "error"
         );
         return;
       }
 
-      // Procesar el alquiler
+      if (!customerExists) {
+        showAlert("❌ Cliente no encontrado. Verifique el ID.", "error");
+        return;
+      }
 
-      alert("Películas rentadas exitosamente.");
+      const availabilityResults = await Promise.all(
+        cart.map(async (movie) => {
+          try {
+            const response = await axios.get(
+              `${API_BASE_URL}/films/${movie.id}/availability`,
+              { params: { store_id: storeId } }
+            );
+
+            if (typeof response.data?.available !== "boolean") {
+              throw new Error("Respuesta inválida del servidor");
+            }
+
+            return {
+              movieId: movie.id,
+              title: movie.title,
+              isAvailable: response.data.available,
+              inventoryId: response.data.inventory_id || null,
+              error: null,
+            };
+          } catch (error: unknown) {
+            console.error(`Error verificando ${movie.title}:`, error);
+            const errorMessage =
+              error instanceof Error
+                ? error.message
+                : "Error de verificación desconocido";
+            return {
+              movieId: movie.id,
+              title: movie.title,
+              isAvailable: false,
+              inventoryId: null,
+              error: errorMessage,
+            };
+          }
+        })
+      );
+
+      const unavailableMovies = availabilityResults.filter(
+        (item) => !item.isAvailable
+      );
+      if (unavailableMovies.length > 0) {
+        const movieList = unavailableMovies
+          .map((m) => `• ${m.title}${m.error ? ` (${m.error})` : ""}`)
+          .join("\n");
+        showAlert(`🚫 Películas no disponibles:\n${movieList}`, "warning");
+        return;
+      }
+
+      const rentalItems = availabilityResults
+        .filter((item) => item.isAvailable && item.inventoryId)
+        .map((item) => ({
+          film_id: item.movieId,
+          inventory_id: item.inventoryId,
+        }));
+
+      if (rentalItems.length !== cart.length) {
+        showAlert("⚠️ Algunas películas no pudieron ser procesadas", "warning");
+        return;
+      }
+
+      const rentalResponse = await axios.post(
+        `${API_BASE_URL}/rentals`,
+        {
+          customer_id: customerId,
+          store_id: storeId,
+          items: rentalItems,
+        },
+        {
+          timeout: 10000,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      const result = rentalResponse.data;
+      const completedIds = result.completed.map((r: any) => r.film_id);
+      const failed = result.failed;
+
+      if (failed.length > 0) {
+        const failList = failed
+          .map((f: any) => `• ID ${f.film_id}: ${f.error}`)
+          .join("\n");
+        showAlert(
+          `⚠️ Algunas películas no se pudieron alquilar:\n${failList}`,
+          "warning"
+        );
+      }
+
+      if (!rentalResponse.data?.success) {
+        const message =
+          rentalResponse.data?.message || "El alquiler no pudo ser completado";
+        showAlert(`⚠️ ${message}`, "error");
+        return;
+      }
+
+      setCart((prevCart) =>
+        prevCart.filter((m) => !completedIds.includes(m.id))
+      );
+
+      if (completedIds.length > 0) {
+        showAlert(
+          `✅ ${completedIds.length} películas alquiladas con éxito.`,
+          "success"
+        );
+      }
+
       setCart([]);
     } catch (error) {
-      console.error("Error al alquilar películas:", error);
+      console.error("Error en el proceso de alquiler:", error);
 
-      if (error instanceof Error) {
-        // Error estándar
-        console.error("Mensaje de error:", error.message);
+      if (axios.isAxiosError(error)) {
+        if (error.code === "ECONNABORTED") {
+          showAlert(
+            "⏳ Tiempo de espera agotado. Intente nuevamente.",
+            "error"
+          );
+        } else if (error.response) {
+          const status = error.response.status;
+          const message =
+            error.response.data?.detail ||
+            error.response.data?.message ||
+            "Error en el servidor";
 
-        if (axios.isAxiosError(error)) {
-          // Error específico de Axios
-          if (error.response?.data?.detail) {
-            alert(error.response.data.detail);
+          if (status === 422) {
+            showAlert(`📋 Error de validación: ${message}`, "error");
+          } else if (status === 404) {
+            showAlert(`🔍 Recurso no encontrado: ${message}`, "error");
           } else {
-            alert(
-              error.message || "Error al procesar la renta. Intente nuevamente."
-            );
+            showAlert(`⚠️ Error ${status}: ${message}`, "error");
           }
         } else {
-          alert(error.message || "Error inesperado");
+          showAlert("🔌 Error de conexión: " + error.message, "error");
         }
       } else {
-        alert("Error desconocido al procesar la renta");
+        showAlert("❌ Error inesperado: " + String(error), "error");
       }
     }
   };
 
-  // 🔹 Obtener 10 películas aleatorias o buscar por query
-  const fetchMovies = async (query: string) => {
+  const fetchMovies = async (search: string, storeId: number) => {
     try {
-      const url = query ? `${SEARCH_URL}?query=${query}` : MOVIES_URL;
-      const response = await fetch(url);
-      const data = await response.json();
+      let response;
 
-      let movieList = data.movies || [];
+      if (search.trim() !== "") {
+        response = await axios.get(`${API_BASE_URL}/movies`, {
+          params: { query: search.toLowerCase(), store_id: storeId },
+        });
+      } else {
+        response = await axios.get(`${API_BASE_URL}/movies`, {
+          params: { store_id: storeId },
+        });
 
-      // Si no hay datos de la API, usar el mock (solo en desarrollo)
-
-      // 🔀 Si la búsqueda está vacía, mostrar 10 películas aleatorias
-      if (!query) {
-        movieList = movieList.sort(() => Math.random() - 0.5).slice(0, 10);
+        const allMovies = response.data.movies;
+        setMovies(allMovies.slice(0, 15));
+        return;
       }
 
-      setMovies(movieList);
+      setMovies(response.data.movies);
     } catch (error) {
-      console.error("Error al obtener películas:", error);
+      console.error("Error al cargar películas:", error);
+      showAlert("⚠️ Error al cargar películas", "error");
     }
   };
 
   // 🔄 Cargar 10 películas aleatorias al inicio
   useEffect(() => {
-    fetchMovies("");
-  }, []);
+    if (searchQuery.trim() === "") {
+      fetchMovies("", storeId); // carga inicial si no hay búsqueda
+    }
+  }, [storeId]);
 
   // Eliminamos onClearCart ya que ahora se maneja dentro de handleCheckout
 
@@ -146,6 +248,12 @@ function App() {
 
   const toggleCart = () => {
     setShowCart((prev) => !prev);
+  };
+  const handleStoreChange = (event: { target: { value: any } }) => {
+    const newStoreId = event.target.value;
+    setStoreId(newStoreId);
+    setCart([]); // Limpiar carrito al cambiar de tienda
+    fetchMovies("", newStoreId); // Volver a cargar películas de esa tienda
   };
 
   return (
@@ -199,11 +307,28 @@ function App() {
                 minWidth: 0, // Permite que el contenido se reduzca
               }}
             >
-              <SearchBar onSearch={fetchMovies} />
+              <SearchBar
+                onSearch={(query) => {
+                  fetchMovies(query, storeId);
+                  setSearchQuery(query);
+                }}
+              />
             </Box>
           </Box>
 
           {/* Botón del carrito */}
+          <FormControl size="small" sx={{ minWidth: 120, marginRight: "20px" }}>
+            <InputLabel id="store-select-label">Tienda</InputLabel>
+            <Select
+              labelId="store-select-label"
+              value={storeId}
+              label="Tienda"
+              onChange={handleStoreChange}
+            >
+              <MenuItem value={1}>Tienda 1</MenuItem>
+              <MenuItem value={2}>Tienda 2</MenuItem>
+            </Select>
+          </FormControl>
           <Button
             variant="contained"
             color="primary"

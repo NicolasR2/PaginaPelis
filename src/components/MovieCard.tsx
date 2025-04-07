@@ -1,4 +1,3 @@
-
 import { Card, CardContent, Typography, Button } from "@mui/material";
 
 interface Movie {
@@ -19,22 +18,22 @@ const MovieCard: React.FC<MovieCardProps> = ({
   onToggleCart,
   isInCart,
 }) => {
-  
-
-  
-
   return (
     <Card sx={{ marginBottom: 2, padding: 2, boxShadow: 3 }}>
       <CardContent>
         <Typography variant="h6">{movie.title}</Typography>
         <Typography variant="body2">{movie.description}</Typography>
         <Typography variant="body1">
-          Precio: ${movie.rental_rate.toFixed(2)}
+          <p>
+            {movie.rental_rate !== undefined
+              ? `$${movie.rental_rate.toFixed(2)}`
+              : "Precio no disponible"}
+          </p>
         </Typography>
 
         <Button
           variant="contained"
-          color={isInCart ?  "error":"success" } // Cambia de color si fue agregado
+          color={isInCart ? "error" : "success"} // Cambia de color si fue agregado
           onClick={() => onToggleCart(movie)}
           sx={{ marginTop: 1 }}
         >

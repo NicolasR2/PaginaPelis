@@ -15,12 +15,14 @@ import {
   Typography,
 } from "@mui/material";
 import axios from "axios";
+import { useAlert } from "../context/AlertContext"; // ✅ Importa el hook global
 
 interface Rental {
   rental_id: number;
   film_id: number;
   title: string;
   rental_date: string;
+  inventory_id: number;
 }
 
 interface ReturnsDialogProps {
@@ -38,23 +40,26 @@ const ReturnsDialog: React.FC<ReturnsDialogProps> = ({
   const [loading, setLoading] = useState(false);
   const [rentals, setRentals] = useState<Rental[]>([]);
   const [selectedRentals, setSelectedRentals] = useState<number[]>([]);
-  const [error, setError] = useState("");
+  const [hasSearched, setHasSearched] = useState(false);
+
+  const { showAlert } = useAlert(); // ✅ Usa el contexto global
 
   const handleSearch = async () => {
     if (!customerId.trim()) {
-      setError("Por favor ingrese un ID de cliente");
+      showAlert("❌ Por favor ingrese un ID de cliente", "warning");
       return;
     }
 
     setLoading(true);
+    setHasSearched(true);
+
     try {
       const response = await axios.get(
         `${API_BASE_URL}/customers/${customerId}/rentals`
       );
       setRentals(response.data.rentals);
-      setError("");
     } catch (err) {
-      setError("Cliente no encontrado o error en la conexión");
+      showAlert("⚠️ Cliente no encontrado o error en la conexión", "error");
       setRentals([]);
     } finally {
       setLoading(false);
@@ -63,7 +68,7 @@ const ReturnsDialog: React.FC<ReturnsDialogProps> = ({
 
   const handleReturn = async () => {
     if (selectedRentals.length === 0) {
-      setError("Seleccione al menos una película para devolver");
+      showAlert("⚠️ Seleccione al menos una película para devolver", "info");
       return;
     }
 
@@ -72,12 +77,11 @@ const ReturnsDialog: React.FC<ReturnsDialogProps> = ({
       await axios.post(`${API_BASE_URL}/returns`, {
         rental_ids: selectedRentals,
       });
-      alert("Devolución realizada con éxito");
-      // Actualizar la lista después de devolver
-      handleSearch();
+      showAlert("✅ Devolución realizada con éxito", "success");
+      handleSearch(); // Refresca la lista
       setSelectedRentals([]);
     } catch (err) {
-      setError("Error al procesar la devolución");
+      showAlert("❌ Error al procesar la devolución", "error");
     } finally {
       setLoading(false);
     }
@@ -113,17 +117,11 @@ const ReturnsDialog: React.FC<ReturnsDialogProps> = ({
           </Button>
         </Box>
 
-        {error && (
-          <Typography color="error" sx={{ mt: 2 }}>
-            {error}
-          </Typography>
-        )}
-
         {loading && (
           <CircularProgress sx={{ display: "block", mx: "auto", my: 2 }} />
         )}
 
-        {rentals.length > 0 && (
+        {!loading && rentals.length > 0 && (
           <>
             <Typography variant="h6" sx={{ mt: 2 }}>
               Películas Rentadas:
@@ -137,14 +135,38 @@ const ReturnsDialog: React.FC<ReturnsDialogProps> = ({
                   />
                   <ListItemText
                     primary={rental.title}
-                    secondary={`Rentada el: ${new Date(
-                      rental.rental_date
-                    ).toLocaleDateString()}`}
+                    secondary={
+                      <>
+                        {`Rentada el: ${new Date(
+                          rental.rental_date
+                        ).toLocaleDateString()}`}
+                        <br />
+                        {`Inventory ID: ${rental.inventory_id}`}
+                      </>
+                    }
                   />
                 </ListItem>
               ))}
             </List>
           </>
+        )}
+
+        {!loading && hasSearched && rentals.length === 0 && (
+          <Box
+            sx={{
+              mt: 4,
+              p: 2,
+              bgcolor: "#fff3cd",
+              color: "#856404",
+              border: "1px solid #ffeeba",
+              borderRadius: 2,
+              textAlign: "center",
+            }}
+          >
+            <Typography variant="body1">
+              Este cliente no tiene películas rentadas actualmente.
+            </Typography>
+          </Box>
         )}
       </DialogContent>
       <DialogActions>
