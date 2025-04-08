@@ -16,7 +16,7 @@ app = FastAPI()
 # Configuración CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://18.206.172.229:3000"],
+    allow_origins=["http://3.88.166.111:3000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -114,6 +114,70 @@ def get_movies(query: str = "", store_id: int = 1):
     finally:
         connection.close()
 
+@app.get("/movies/{movie_id}/details")
+def get_movie_details(movie_id: int, store_id: int = 1):
+    connection = get_db_connection()
+    try:
+        cursor = connection.cursor()
+
+        # Obtener información de la película
+        cursor.execute("""
+            SELECT f.film_id, f.title, f.description, f.rental_rate, l.name AS language
+            FROM film f
+            JOIN language l ON f.language_id = l.language_id
+            WHERE f.film_id = %s
+        """, (movie_id,))
+        row = cursor.fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="Película no encontrada")
+        movie = {
+            "film_id": row[0],
+            "title": row[1],
+            "description": row[2],
+            "rental_rate": row[3],
+            "language": row[4],
+        }
+
+        # Obtener actores
+        cursor.execute("""
+            SELECT a.actor_id, a.first_name, a.last_name
+            FROM actor a
+            JOIN film_actor fa ON a.actor_id = fa.actor_id
+            WHERE fa.film_id = %s
+        """, (movie_id,))
+        actors = cursor.fetchall()
+        actor_list = [
+            {"actor_id": actor[0], "name": f"{actor[1]} {actor[2]}"}
+            for actor in actors
+        ]
+
+        # Obtener copias disponibles y sus inventory_ids
+        cursor.execute("""
+            SELECT i.inventory_id
+            FROM inventory i
+            WHERE i.film_id = %s AND i.store_id = %s
+            AND i.inventory_id NOT IN (
+                SELECT r.inventory_id
+                FROM rental r
+                WHERE r.return_date IS NULL
+            )
+        """, (movie_id, store_id))
+        available_inventory = cursor.fetchall()
+        inventory_ids = [row[0] for row in available_inventory]
+        available_copies = len(inventory_ids)
+
+        return {
+            "film_id": movie["film_id"],
+            "title": movie["title"],
+            "description": movie["description"],
+            "rental_rate": movie["rental_rate"],
+            "language": movie["language"],
+            "actors": actor_list,
+            "available_copies": available_copies,
+            "inventory_ids": inventory_ids,  # ⬅️ NUEVO
+        }
+    finally:
+        connection.close()
 
 
 @app.get("/movies/search/", response_model=dict)

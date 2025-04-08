@@ -1,5 +1,5 @@
 import React from "react";
-import { Box, Typography } from "@mui/material";
+import { Box, Typography, Grid } from "@mui/material";
 import MovieCard from "./MovieCard";
 
 interface Movie {
@@ -13,24 +13,52 @@ interface MovieListProps {
   movies: Movie[];
   onToggleCart: (movie: Movie) => void;
   cart: Movie[];
+  storeId: number;
+  API_BASE_URL: string;
 }
 
 const MovieList: React.FC<MovieListProps> = ({
   movies,
   onToggleCart,
   cart,
+  storeId,
+  API_BASE_URL,
 }) => {
   return (
-    <Box sx={{ width: "100%" }}>
+    <Box sx={{ width: "100%", padding: 2 }}>
       {movies.length > 0 ? (
-        movies.map((movie) => (
-          <MovieCard
-            key={movie.id}
-            movie={movie}
-            onToggleCart={onToggleCart}
-            isInCart={cart.some((m) => m.id === movie.id)}
-          />
-        ))
+        <Grid
+          container
+          spacing={3}
+          justifyContent="center"
+          sx={{ margin: 0, width: "100%" }}
+        >
+          {movies.map((movie) => (
+            <Grid
+              item
+              key={movie.id}
+              xs={12}
+              sm={6}
+              md={4}
+              lg={3}
+              xl={2.4}
+              sx={{
+                display: "flex",
+                justifyContent: "center",
+              }}
+            >
+              <Box sx={{ width: "100%", maxWidth: 260 }}>
+                <MovieCard
+                  movie={movie}
+                  onToggleCart={onToggleCart}
+                  isInCart={cart.some((m) => m.id === movie.id)}
+                  storeId={storeId}
+                  API_BASE_URL={API_BASE_URL}
+                />
+              </Box>
+            </Grid>
+          ))}
+        </Grid>
       ) : (
         <Box
           sx={{

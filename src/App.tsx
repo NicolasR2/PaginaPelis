@@ -11,7 +11,7 @@ import { useAlert } from "./context/AlertContext";
 
 // Añade este estado al componente App
 
-const API_BASE_URL = "http://18.206.172.229:8000";
+const API_BASE_URL = "http://3.88.166.111:8000";
 
 function App() {
   interface Movie {
@@ -317,7 +317,10 @@ function App() {
           </Box>
 
           {/* Botón del carrito */}
-          <FormControl size="small" sx={{ minWidth: 120, marginRight: "20px" }}>
+          <FormControl
+            size="small"
+            sx={{ minWidth: 120, marginRight: "20px", marginLeft: "20px" }}
+          >
             <InputLabel id="store-select-label">Tienda</InputLabel>
             <Select
               labelId="store-select-label"
@@ -353,6 +356,8 @@ function App() {
             movies={movies}
             onToggleCart={handleToggleCart}
             cart={cart}
+            storeId={storeId}
+            API_BASE_URL={API_BASE_URL}
           />
         ) : (
           <div>
